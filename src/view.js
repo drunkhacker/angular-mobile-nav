@@ -2,6 +2,8 @@ angular.module('ajoslin.mobile-navigate')
 .directive('mobileView', ['$rootScope', '$compile', '$controller', '$route', '$change', '$q',
 function($rootScope, $compile, $controller, $route, $change, $q) {
 
+  var pageStack = [];
+
   function link(scope, viewElement, attrs) {    
     //Insert page into dom
     function insertPage(page) {
@@ -34,7 +36,11 @@ function($rootScope, $compile, $controller, $route, $change, $q) {
         var current = $route.current && $route.current.$$route || {};
         var transition = reverse ? source.transition() : dest.transition();
 
-        insertPage(dest);
+        if (reverse) { //pop
+        } else { //push
+          pageStack.push(dest);
+          insertPage(dest);
+        }
 
         //If the page is marked as reverse, reverse the direction
         if (dest.reverse() || current.reverse) {
@@ -49,8 +55,11 @@ function($rootScope, $compile, $controller, $route, $change, $q) {
           promise.then(function() {
             if (source) {
               $rootScope.$broadcast('$pageTransitionSuccess', dest, source);
-              source.scope.$destroy();
-              source.element.remove();
+              if (reverse) {
+                var src = pageStack.pop();
+                src.scope.$destroy();
+                src.element.remove();
+              }
               source = undefined;
             }
           });
